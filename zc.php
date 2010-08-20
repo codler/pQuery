@@ -65,31 +65,27 @@ class a extends zc_base implements arrayaccess, IteratorAggregate {
 	
 	// implements arrayaccess
 	function offsetSet($offset, $value) {
-        if (is_null($offset)) {
-            $this->a[] = $value;
-        } else {
-            $this->a[$offset] = $value;
-        }
-    }
-    
+		if (is_null($offset)) {
+			$this->a[] = $value;
+		} else {
+			$this->a[$offset] = $value;
+		}
+	}
+	
 	// implements arrayaccess
 	function offsetExists($offset) {
-        return isset($this->a[$offset]);
-    }
+		return isset($this->a[$offset]);
+	}
 	
 	// implements arrayaccess
-    function offsetUnset($offset) {
-        unset($this->a[$offset]);
-    }
+	function offsetUnset($offset) {
+		unset($this->a[$offset]);
+	}
 	
 	// implements arrayaccess
-    function offsetGet($offset) {
-		if ($this->is_i($offset)) {
-			if ($offset<0)
-				$offset = $this->length($this->a) + $offset;
-		}
-        return isset($this->a[$offset]) ? $this->zc_type($this->a[$offset]) : null;
-    }
+	function offsetGet($offset) {
+		return $this->item($offset);
+	}
 	
 	// implements IteratorAggregate
 	function getIterator() {
@@ -98,8 +94,45 @@ class a extends zc_base implements arrayaccess, IteratorAggregate {
 			$a[$k] = $this->zc_type($v);
 		}
 	
-        return new ArrayIterator($a);
-    }
+		return new ArrayIterator($a);
+	}
+	
+	// slice selector
+	function item($expr) {
+		if (is_numeric($expr)) {
+			if ($this->is_i($expr)) {
+				if ($expr<0)
+					$expr = $this->length($this->a) + $expr;
+			}
+			return isset($this->a[$expr]) ? $this->zc_type($this->a[$expr]) : null;
+		} else {
+			$part = explode(':', $expr);
+			$start = intval($part[0]);
+			$end = intval($part[1]);
+			
+			if ($end > count($this->a)) {
+				$sliced = array_slice($this->a, $start);
+			} elseif ($end<0) {
+				$end = $this->length($this->a) + $end;
+				if ($start<0) 
+					$start = $this->length($this->a) + $start;
+				
+				if ($end > $start) {
+				
+					$sliced = array_slice($this->a, $start, $end - $start + 1);
+				} else 					
+					$sliced = array_slice($this->a, $end, $start - $end + 1);
+				
+			} else {
+				if ($start<0) 
+					$start = $this->length($this->a) + $start;
+					
+				$sliced = array_slice($this->a, $start, $end - $start + 1);
+			
+			}
+			return a($sliced);
+		}
+	}
 	
 	// alias of add()
 	function add_last($s) {
@@ -168,7 +201,7 @@ class i extends zc_base {
 class zc_base {
 
 	function __get($prop) {
-		$list_prop = array('is_a','is_i','is_s','length','to_a','to_i','to_s');
+		$list_prop = array('is_a','is_i','is_s','get','length','methods','to_a','to_i','to_s');
 		if (in_array($prop, $list_prop)) {
 			return $this->$prop($this->{get_class($this)});
 		} else {
@@ -277,33 +310,56 @@ assert(s("string")->to_a->to_s == print_r(array("string"), true));
 assert(s("string")->to_i == i(0));
 assert(s("string")->to_i == i("0"));
 assert(s("string")->to_i == "0");
-assert(s("string")->to_i->get() == 0);
+assert(s("string")->to_i->get == 0);
 assert(s("string")->length == 6);
 
+// Integer assert
+assert(i(10) == "10");
+assert(i(10) == i("10"));
+assert(i(10)->get == 10);
+assert(i(10)->to_s == "10");
+assert(i(10)->to_a == a(10));
+assert(i(10)->to_a->to_i == 1);
+assert(i(10)->length == 2);
 
-echo print_r(s("string")->to_i->get());
-#echo print_r(s("hej")->methods());
-$a = s("hej")->to_a;
-$a->add_first("a1")->add_last("a2");
-$a->add(s("a3")); // alias of add_last
-$a->add(123)->add(array(321,"hejs"));
-$a->prepend(array(s('b1'),'c1')); // adds several in an array
-$a->append(array('b2','c2')); // adds several in an array
-$a->remove_first()->remove_last();
-$a->remove($r); // alias of remove_last
-echo "removed:".$r."!";
-#echo i(0123)->to_s->to_a->to_s;
+// Array assert
+assert(a("a")->get == array("a"));
+assert(a("a") == print_r(array("a"), true));
+assert(a(array("a")) == print_r(array("a"), true));
+assert(a(array(array("a"))) == print_r(array(array("a")), true));
+$a = a("a");
+assert($a->add_first("a1") == print_r(array("a1","a"), true));
+assert($a->add_last("a2") == print_r(array("a1","a","a2"), true));
+// alias of add_last
+assert($a->add("a3") == print_r(array("a1","a","a2","a3"), true));
+$b = clone $a;
+$c = clone $a;
+assert($b->add(array("a4",$a)) == print_r(array("a1","a","a2","a3",array("a4", a(array("a1","a","a2","a3")))), true));
+assert($c->add(array("a4",$a)) == print_r(array("a1","a","a2","a3",array("a4", $a)), true));
+unset($b);
+unset($c);
+assert($a->remove_first()->remove_last() == print_r(array("a","a2"), true));
+assert($a->length == 2);
+// alias of remove_last
+$a->remove($r); // param ref of deleted object
+assert($r == "a2");
+// adds several in an array
+assert($a->prepend(array(a("b1"), "c1")) == print_r(array(a("b1"), "c1","a"), true));
+assert($a->append(array("b2","c2")) == print_r(array(a("b1"), "c1","a","b2","c2"), true));
+
 foreach($a AS $k => $v) {
 	if ($v->is_a) {
-		echo $v[i(1)->get()]->to_i;
-	} else {
-		echo $v;
+		assert($v[0] == "b1");
+		assert($v[0] == s("b1"));
+		assert($v->to_s == print_r(array("b1"), true));
 	}
 }
-echo $a;
-#echo a(array(123,"he2"));
-#echo $a->methods();
-/* foreach($a->a AS $k => $v) {
-	echo $v;
-} */
+echo print_r($a["3:-1"]->get) ;
+echo print_r($a["3:-3"]->get) ;
+assert($a["1:3"]->get == array("c1","a","b2"));
+assert($a["-3:3"]->get == array("a","b2"));
+assert($a["3:-1"]->get == array("b2","c2"));
+assert($a["3:-3"]->get == array("a","b2"));
+echo $a->methods;
+
 ?>
