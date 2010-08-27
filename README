@@ -1,0 +1,44 @@
+Reference
+
+Datatypes: Array (a), Integer (i), String (s)
+
+Global methods
+	get
+		Gets PHP value
+	is_a
+		Check if it is array
+	is_i
+		Check if it is integer
+	is_s
+		Check if it is string	
+	length
+		Length of array, string
+	methods
+		List available methods
+	to_a
+		Converts to array
+	to_i
+		Converts to integer
+	to_s
+		Converts to string
+
+Array methods
+    item ( index )
+		Get item by index from the array
+	add ( item )
+		Add item at end of array
+	add_last
+		Alias of "add"
+	append ( array_of_items )
+		Concat array_of_items at end of array
+	prepend
+		Concat array_of_items at beginning of array
+	remove ( & deleted_item )
+		Remove item at end of array
+	remove_first ( & deleted_item )
+		Remove item at beginning of array
+	remove_last ( & deleted_item )
+		Alias of "remove"
+Integer methods
+
+String methods
