@@ -44,6 +44,40 @@ class s extends zc_base {
 	function __toString() {
 		return $this->s;
 	}
+	
+	function upper() {
+		$this->s = strtoupper($this->s);
+		
+		return $this;
+	}
+	
+	function lower() {
+		$this->s = strtolower($this->s);
+		
+		return $this;
+	}
+	
+	function safe() {
+		return $this->zc_type(addslashes($this->s));
+	}
+	
+	function unsafe() {
+		return $this->zc_type(stripslashes($this->s));
+	}
+	
+	function xss_safe() {
+		return $this->zc_type(htmlspecialchars($this->s));
+	}
+	
+	function xss_unsafe() {
+		return $this->zc_type(htmlspecialchars_decode($this->s));
+	}
+	
+	function reverse() {
+		$this->s = strrev($this->s);
+		
+		return $this;
+	}
 }
 
 // array
@@ -180,9 +214,78 @@ class a extends zc_base implements arrayaccess, IteratorAggregate {
 	}
 	
 	function remove( & $out=false) {
-		$out = array_pop($this->a);
+		$out = $this->zc_type(array_pop($this->a));
 		
 		return $this;
+	}
+	
+	// Return boolean
+	function has($item) {
+		return in_array($item, $this->a);
+	}
+	
+	// find value
+	// Return key
+	function find($item) {
+		return $this->zc_type(array_search($item, $this->a));
+	}
+	
+	function find_all($item) {
+		return $this->zc_type(array_keys($this->a, $item));
+	}
+	
+	function values() {
+		return $this->zc_type(array_values($this->a));
+	}
+	
+	/* function keys() {
+		return array_keys($this->a);
+	} */
+	
+	function repeat($i) {
+		while ($i > 0) {
+			$this->append($this->a);
+			$i--;
+		}
+		return $this;
+	}
+	
+	function filter($func) {
+		$this->a = array_filter($this->a, $func);
+		
+		return $this;
+	}
+	
+	function map($func) {
+		$this->a = array_filter($func, $this->a);
+		
+		return $this;
+	}
+	
+	function reverse() {
+		$this->a = array_reverse($this->a);
+		
+		return $this;
+	}
+	
+	function sum() {
+		return $this->zc_type(array_sum($this->a));
+	}
+	
+	function min() {
+		return $this->zc_type(min($this->a));
+	}
+	
+	function max() {
+		return $this->zc_type(max($this->a));
+	}
+	
+	function first() {
+		return $this->item(0);
+	}
+	
+	function last() {
+		return $this->item(-1);
 	}
 }
 
